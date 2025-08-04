@@ -5,14 +5,14 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "name",
+  "location_name",
   "latitude",
   "longitude",
   "radius"
  ],
  "fields": [
    {
-   "fieldname": "name",
+   "fieldname": "location_name",
    "fieldtype": "Data",
    "label": "Location Name",
    "reqd": 1
@@ -21,14 +21,12 @@
    "fieldname": "latitude",
    "fieldtype": "Float",
    "label": "Latitude",
-   "precision": "8",
    "reqd": 1
   },
   {
    "fieldname": "longitude",
    "fieldtype": "Float",
    "label": "Longitude",
-   "precision": "8",
    "reqd": 1
   },
   {

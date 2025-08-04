@@ -14,10 +14,11 @@ def get_work_location_coordinates(work_location_name):
             frappe.throw("Work Location does not have coordinates configured")
             
         return {
+            "name": work_location.name,
             "latitude": work_location.latitude,
             "longitude": work_location.longitude,
-            "radius": work_location.radius or 0,
-            "name": work_location.name
+            "radius": work_location.radius or 0
+            
         }
         
     except frappe.DoesNotExistError:

@@ -144,6 +144,11 @@ after_install = "work_location.employee_checkin.add_employee_checkin_fields"
 # 		"on_trash": "method"
 # 	}
 # }
+doc_events = {
+    "Work Location": {
+        "autoname": "work_location.location_abbr.autoname"
+    }
+}
 
 # Scheduled Tasks
 # ---------------

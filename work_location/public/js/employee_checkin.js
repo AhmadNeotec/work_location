@@ -91,7 +91,7 @@ frappe.ui.form.on('Employee Checkin', {
         const lat = parseFloat(work_location_data.latitude);
         const lng = parseFloat(work_location_data.longitude);
         const radius = work_location_data.radius || 100;
-        const location_name = work_location_data.name || frm.doc.work_location;
+        const location_name = work_location_data.location_name || frm.doc.work_location;
         
         // Create location info card
         frm.location_display = $(`
