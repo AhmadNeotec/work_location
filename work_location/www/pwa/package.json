@@ -1,0 +1,23 @@
+{
+  "name": "work-location-pwa",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build --base=/assets/work_location/pwa/",
+    "copy-html-entry": "cp ../work_location/public/pwa/index.html ../work_location/www/pwa.html"
+  },
+  "dependencies": {
+    "@ionic/vue": "^7.4.3",
+    "@ionic/vue-router": "^7.4.3",
+    "dayjs": "^1.11.11",
+    "feather-icons": "^4.29.1",
+    "frappe-ui": "^0.1.72",
+    "vue": "^3.5.12",
+    "vue-router": "^4.3.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.4.0",
+    "vite": "^5.4.10"
+  }
+}

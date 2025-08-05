@@ -31,7 +31,12 @@ app_license = "mit"
 # include js, css files in header of web template
 # web_include_css = "/assets/work_location/css/work_location.css"
 # web_include_js = "/assets/work_location/js/work_location.js"
-
+website_includes = [
+    "pwa/index.html",
+    "pwa/main.js",
+    "pwa/views/checkin.vue",
+    "pwa/utils/formatters.js"
+]
 # include custom scss in every website theme (without file extension ".scss")
 # website_theme_scss = "work_location/public/scss/website"
 
