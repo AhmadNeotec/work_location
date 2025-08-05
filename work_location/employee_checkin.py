@@ -1,71 +1,76 @@
 import frappe
-import time
-from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+from frappe import _
 
-def add_employee_checkin_fields(max_retries=3, retry_delay=5):
+def validate_checkin_location(doc, method):
     """
-    Add custom fields to Employee Checkin doctype with retry logic for lock timeouts
-    
-    Args:
-        max_retries (int): Maximum number of retry attempts
-        retry_delay (int): Delay in seconds between retries
+    Validate that the selected custom_checkin_location is in the employee's custom_allowed_shift_locations.
+    Override default geolocation validation if not required.
     """
-    # Make sure Work Location exists
-    if not frappe.db.exists("DocType", "Work Location"):
-        frappe.throw("Work Location Doctype must be installed before adding custom fields.")
+    if not doc.custom_checkin_location:
+        frappe.throw(_("Checkin Location is mandatory."))
+    if not doc.log_type:
+        frappe.throw(_("Log Type (IN/OUT) is mandatory."))
 
-    custom_fields = {
-        "Employee Checkin": [
-            {
-                "fieldname": "work_location",
-                "label": "Work Location",
-                "fieldtype": "Link",
-                "options": "Work Location",
-                "insert_after": "employee"
-            },
-            {
-                "fieldname": "current_lat",
-                "label": "Current Latitude",
-                "fieldtype": "Float",
-                "insert_after": "work_location"
-            },
-            {
-                "fieldname": "current_lng",
-                "label": "Current Longitude",
-                "fieldtype": "Float",
-                "insert_after": "current_lat"
-            },
-            {
-                "fieldname": "is_remote",
-                "label": "Is Remote",
-                "fieldtype": "Check",
-                "insert_after": "current_lng"
-            }
-        ]
-    }
+    # Get the employee's allowed shift locations
+    employee = frappe.get_doc("Employee", doc.employee)
+    allowed_locations = employee.get("custom_allowed_shift_locations") or []
+    if allowed_locations is None:
+        allowed_locations = []
+        frappe.log_error(
+            message=f"Employee {doc.employee} has no custom_allowed_shift_locations defined or it is set to None.",
+            title="Invalid Allowed Shift Locations"
+        )
+    allowed_locations = [row.shift_location for row in allowed_locations if row.shift_location]
 
-    # Retry logic for handling lock timeouts
-    for attempt in range(max_retries):
-        try:
-            frappe.db.begin()  # Start transaction
-            create_custom_fields(custom_fields)
-            frappe.db.commit()  # Commit transaction
-            print(f"Custom fields added successfully on attempt {attempt + 1}")
-            return
-            
-        except frappe.QueryTimeoutError as e:
-            frappe.db.rollback()  # Rollback on timeout
-            if attempt < max_retries - 1:
-                print(f"Lock timeout on attempt {attempt + 1}, retrying in {retry_delay} seconds...")
-                time.sleep(retry_delay)
-            else:
-                frappe.throw(f"Failed to add custom fields after {max_retries} attempts due to lock timeout: {str(e)}")
-                
-        except frappe.DuplicateEntryError:
-            frappe.db.rollback()
-            print("Custom fields already exist, skipping...")
-            return
-            
-        except Exception as e:
-            frappe.db.rollback()
-            frappe.throw(f"Error adding custom fields: {str(e)}")
+    if not allowed_locations:
+        frappe.throw(_("No valid Shift Locations defined for employee {0}. Please add locations in the Employee record.").format(doc.employee))
+
+    # Validate custom_checkin_location is in allowed_locations
+    if doc.custom_checkin_location not in allowed_locations:
+        frappe.throw(_("Selected Checkin Location {0} is not in the employee's allowed locations: {1}").format(
+            doc.custom_checkin_location, ", ".join(allowed_locations)
+        ))
+
+    # Bypass geolocation validation if not required
+    if not frappe.db.get_single_value("HR Settings", "allow_geolocation_tracking"):
+        doc.shift = doc.custom_checkin_location
+        return
+
+    # Validate geolocation if enabled and coordinates are provided
+    if doc.latitude and doc.longitude:
+        shift_location = frappe.get_doc("Shift Location", doc.custom_checkin_location)
+        if shift_location.latitude and shift_location.longitude and shift_location.checkin_radius:
+            distance = ((float(doc.latitude) - float(shift_location.latitude)) ** 2 +
+                        (float(doc.longitude) - float(shift_location.longitude)) ** 2) ** 0.5 * 111320  # Convert to meters
+            if distance > shift_location.checkin_radius:
+                frappe.throw(_(
+                    "Check-in is {0} meters from {1}, exceeding the allowed radius of {2} meters."
+                ).format(distance, doc.custom_checkin_location, shift_location.checkin_radius))
+    else:
+        # Log missing geolocation data but allow check-in
+        frappe.log_error(
+            message=f"Employee {doc.employee} checked in at {doc.custom_checkin_location} without geolocation data.",
+            title="Missing Geolocation"
+        )
+
+    # Override Shift Assignment's Shift Location for attendance processing
+    shift_assignment = frappe.get_all(
+        "Shift Assignment",
+        filters={
+            "employee": doc.employee,
+            "start_date": ["<=", doc.time],
+            "end_date": [">=", doc.time],
+            "docstatus": 1
+        },
+        fields=["shift_location"],
+        limit=1
+    )
+
+    if shift_assignment and shift_assignment[0].shift_location != doc.custom_checkin_location:
+        frappe.log_error(
+            message=f"Employee {doc.employee} checked in at {doc.custom_checkin_location} instead of assigned {shift_assignment[0].shift_location}",
+            title="Shift Location Override"
+        )
+        doc.shift = doc.custom_checkin_location
+        
+        

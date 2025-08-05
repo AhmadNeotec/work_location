@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class WorkLocation(Document):
+class AllowedShiftLocations(Document):
 	pass

@@ -26,7 +26,7 @@ app_license = "mit"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/work_location/css/work_location.css"
-app_include_js = "/assets/work_location/js/employee_checkin.js"
+# app_include_js = "/assets/work_location/js/employee_checkin.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/work_location/css/work_location.css"
@@ -84,7 +84,7 @@ app_include_js = "/assets/work_location/js/employee_checkin.js"
 
 # before_install = "work_location.install.before_install"
 # after_install = "work_location.install.after_install"
-after_install = "work_location.employee_checkin.add_employee_checkin_fields"
+# after_install = "work_location.employee_checkin.add_employee_checkin_fields"
 # Uninstallation
 # ------------
 
@@ -145,11 +145,13 @@ after_install = "work_location.employee_checkin.add_employee_checkin_fields"
 # 	}
 # }
 doc_events = {
-    "Work Location": {
-        "autoname": "work_location.location_abbr.autoname"
+    "Employee Checkin": {
+        "before_save": "work_location.employee_checkin.validate_checkin_location"
     }
 }
-
+# doc_events = {
+    
+# }
 # Scheduled Tasks
 # ---------------
 
