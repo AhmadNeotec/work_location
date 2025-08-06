@@ -1,6 +1,7 @@
 import { createDocumentResource } from "frappe-ui"
 
-import dayjs from "@/utils/dayjs"
+// import dayjs from "@/utils/dayjs"
+import dayjs from "dayjs"
 
 const settings = createDocumentResource({
 	doctype: "System Settings",
