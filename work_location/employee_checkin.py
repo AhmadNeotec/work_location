@@ -71,10 +71,8 @@ def validate_checkin_location(doc, method):
 
     # Bypass geolocation validation if not required
     if not frappe.db.get_single_value("HR Settings", "allow_geolocation_tracking"):
-        frappe.log_error(
-            message=f"Geolocation tracking disabled, bypassing validation for {doc.employee}",
-            title="Geolocation Debug"
-        )
+        # Note: Don't overwrite doc.shift here - it's already set correctly by fetch_shift()
+        # doc.shift should contain the Shift Type name, not the Shift Location
         return
 
     # Validate geolocation if enabled and coordinates are provided
@@ -96,3 +94,25 @@ def validate_checkin_location(doc, method):
             message=f"Employee {doc.employee} checked in at {doc.custom_checkin_location} without geolocation data.",
             title="Missing Geolocation"
         )
+
+    # Override Shift Assignment's Shift Location for attendance processing
+    shift_assignment = frappe.get_all(
+        "Shift Assignment",
+        filters={
+            "employee": doc.employee,
+            "start_date": ["<=", doc.time],
+            "end_date": [">=", doc.time],
+            "docstatus": 1
+        },
+        fields=["shift_location"],
+        limit=1
+    )
+
+    if shift_assignment and shift_assignment[0].shift_location != doc.custom_checkin_location:
+        frappe.log_error(
+            message=f"Employee {doc.employee} checked in at {doc.custom_checkin_location} instead of assigned {shift_assignment[0].shift_location}",
+            title="Shift Location Override"
+        )
+        # Note: Don't overwrite doc.shift here - it's already set correctly by fetch_shift()
+        # doc.shift should contain the Shift Type name (from shift assignment), not the Shift Location
+        

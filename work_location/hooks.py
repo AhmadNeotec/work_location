@@ -27,7 +27,6 @@ app_license = "mit"
 # include js, css files in header of desk.html
 # app_include_css = "/assets/work_location/css/work_location.css"
 # app_include_js = "/assets/work_location/js/employee_checkin.js"
-
 # include js, css files in header of web template
 # web_include_css = "/assets/work_location/css/work_location.css"
 # web_include_js = "/assets/work_location/js/work_location.js"
@@ -135,8 +134,14 @@ website_includes = [
 # Override standard doctype classes
 
 # override_doctype_class = {
-# 	"ToDo": "custom_app.overrides.CustomToDo"
+# 	"ShiftAssignment": "work_location.overrides.CustomToDo"
 # }
+
+# hooks.py
+override_doctype_class = {
+    "Shift Assignment": "work_location.overrides.shift_assignment_override.CustomShiftAssignment"
+}
+
 
 # Document Events
 # ---------------
